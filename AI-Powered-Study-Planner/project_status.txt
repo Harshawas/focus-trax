@@ -1,0 +1,8 @@
+Current version completed:
+- UI dashboard
+- Pomodoro timer
+- webcam integration
+- inactivity warning logic
+- MongoDB task storage
+- frontend-backend integration
+- local persistence for chart analytics
