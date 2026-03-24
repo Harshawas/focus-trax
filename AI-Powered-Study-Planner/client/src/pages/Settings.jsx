@@ -1,85 +1,127 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
+import AppLoader from "../components/layout/AppLoader";
+import useMinimumLoader from "../hooks/useMinimumLoader";
 import { resetStats } from "../services/statsService";
 import { resetDailyAnalytics } from "../services/analyticsService";
+import { addNotification } from "../services/notificationService";
+
+function getInitialSettings() {
+  const savedThemeRaw = localStorage.getItem("theme") || "light";
+  const normalizedTheme = /dark/i.test(savedThemeRaw) ? "dark" : "light";
+
+  return {
+    theme: normalizedTheme,
+    focusDuration: Number(localStorage.getItem("focusDuration")) || 25,
+    breakDuration: Number(localStorage.getItem("breakDuration")) || 5,
+    dailyGoal: Number(localStorage.getItem("dailyGoal")) || 4,
+    notifications: localStorage.getItem("notifications") === "true",
+    webcamMonitoring: localStorage.getItem("webcamMonitoring") !== "false",
+    tabTracking: localStorage.getItem("tabTracking") !== "false",
+    idleTracking: localStorage.getItem("idleTracking") !== "false",
+    autoStartBreaks: localStorage.getItem("autoStartBreaks") === "true",
+    autoStartFocus: localStorage.getItem("autoStartFocus") === "true",
+  };
+}
 
 function Settings() {
-  const user = JSON.parse(localStorage.getItem("user")) || {};
-
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-  const [focusDuration, setFocusDuration] = useState(
-    Number(localStorage.getItem("focusDuration")) || 25
-  );
-  const [breakDuration, setBreakDuration] = useState(
-    Number(localStorage.getItem("breakDuration")) || 5
-  );
-  const [notifications, setNotifications] = useState(
-    localStorage.getItem("notifications") === "true"
-  );
-  const [webcamMonitoring, setWebcamMonitoring] = useState(
-    localStorage.getItem("webcamMonitoring") !== "false"
-  );
-  const [tabTracking, setTabTracking] = useState(
-    localStorage.getItem("tabTracking") !== "false"
-  );
-  const [idleTracking, setIdleTracking] = useState(
-    localStorage.getItem("idleTracking") !== "false"
-  );
-  const [autoStartBreaks, setAutoStartBreaks] = useState(
-    localStorage.getItem("autoStartBreaks") === "true"
-  );
-  const [autoStartFocus, setAutoStartFocus] = useState(
-    localStorage.getItem("autoStartFocus") === "true"
-  );
-  const [dailyGoal, setDailyGoal] = useState(
-    Number(localStorage.getItem("dailyGoal")) || 4
-  );
-  const [burnoutSensitivity, setBurnoutSensitivity] = useState(
-    localStorage.getItem("burnoutSensitivity") || "medium"
-  );
+  const loaderDelayDone = useMinimumLoader(500);
   const [savedMessage, setSavedMessage] = useState("");
+  const [settings, setSettings] = useState(() => getInitialSettings());
 
-  useEffect(() => {
-    if (theme === "dark") {
+  const applyTheme = (themeValue) => {
+    const normalizedTheme = /dark/i.test(themeValue) ? "dark" : "light";
+
+    localStorage.setItem("theme", normalizedTheme);
+    document.documentElement.dataset.theme = normalizedTheme;
+
+    if (normalizedTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-  }, [theme]);
-
-  const handleSaveSettings = () => {
-    localStorage.setItem("theme", theme);
-    localStorage.setItem("focusDuration", focusDuration);
-    localStorage.setItem("breakDuration", breakDuration);
-    localStorage.setItem("notifications", notifications);
-    localStorage.setItem("webcamMonitoring", webcamMonitoring);
-    localStorage.setItem("tabTracking", tabTracking);
-    localStorage.setItem("idleTracking", idleTracking);
-    localStorage.setItem("autoStartBreaks", autoStartBreaks);
-    localStorage.setItem("autoStartFocus", autoStartFocus);
-    localStorage.setItem("dailyGoal", dailyGoal);
-    localStorage.setItem("burnoutSensitivity", burnoutSensitivity);
-
-    setSavedMessage("Settings saved successfully.");
-    setTimeout(() => setSavedMessage(""), 2500);
   };
 
- const handleResetAnalytics = async () => {
-  try {
-    await Promise.all([resetStats(), resetDailyAnalytics()]);
-    setSavedMessage("Analytics reset successfully.");
-    setTimeout(() => setSavedMessage(""), 2500);
-  } catch (error) {
-    console.error("Failed to reset analytics:", error);
-    setSavedMessage("Failed to reset analytics.");
-    setTimeout(() => setSavedMessage(""), 2500);
-  }
-};
+  const handleChange = (key, value) => {
+    const updatedSettings = {
+      ...settings,
+      [key]: value,
+    };
+
+    setSettings(updatedSettings);
+
+    if (key === "theme") {
+      const normalizedTheme = /dark/i.test(value) ? "dark" : "light";
+      applyTheme(normalizedTheme);
+      return;
+    }
+
+    localStorage.setItem(key, String(value));
+  };
+
+  const handleSaveAll = () => {
+    const normalizedTheme = /dark/i.test(settings.theme) ? "dark" : "light";
+
+    localStorage.setItem("theme", normalizedTheme);
+    localStorage.setItem("focusDuration", String(settings.focusDuration));
+    localStorage.setItem("breakDuration", String(settings.breakDuration));
+    localStorage.setItem("dailyGoal", String(settings.dailyGoal));
+    localStorage.setItem("notifications", String(settings.notifications));
+    localStorage.setItem("webcamMonitoring", String(settings.webcamMonitoring));
+    localStorage.setItem("tabTracking", String(settings.tabTracking));
+    localStorage.setItem("idleTracking", String(settings.idleTracking));
+    localStorage.setItem("autoStartBreaks", String(settings.autoStartBreaks));
+    localStorage.setItem("autoStartFocus", String(settings.autoStartFocus));
+
+    applyTheme(normalizedTheme);
+
+    setSavedMessage("Settings saved successfully.");
+
+    addNotification({
+      title: "Settings Saved",
+      message: "Your app preferences have been updated.",
+      type: "success",
+    });
+
+    setTimeout(() => setSavedMessage(""), 2200);
+  };
+
+  const handleResetAnalytics = async () => {
+    try {
+      await Promise.all([resetStats(), resetDailyAnalytics()]);
+
+      setSavedMessage("Analytics reset successfully.");
+
+      addNotification({
+        title: "Analytics Reset",
+        message: "Your stats and daily analytics history were cleared.",
+        type: "warning",
+      });
+
+      setTimeout(() => setSavedMessage(""), 2200);
+    } catch (error) {
+      console.error("Failed to reset analytics:", error);
+      setSavedMessage("Failed to reset analytics.");
+      setTimeout(() => setSavedMessage(""), 2200);
+    }
+  };
 
   const cardClass =
     "glass-card rounded-[28px] p-6 border border-slate-200 dark:border-slate-800 transition-colors duration-300";
 
   const inputClass = "lux-input";
+  const currentTheme = settings.theme === "dark" ? "Dark" : "Light";
+
+  if (!loaderDelayDone) {
+    return (
+      <AppLayout
+        title="Settings"
+        subtitle="Customize your app behavior, appearance, and monitoring preferences"
+      >
+        <AppLoader message="Loading settings..." />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout
@@ -88,35 +130,23 @@ function Settings() {
     >
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
-          <div className={cardClass}>
-            <h3 className="text-2xl font-black section-title">Profile</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-              <div>
-                <label className="block text-sm label-text mb-2">Full Name</label>
-                <input
-                  value={user.name || ""}
-                  disabled
-                  className={`${inputClass} opacity-70 cursor-not-allowed`}
-                />
-              </div>
-              <div>
-                <label className="block text-sm label-text mb-2">Email</label>
-                <input
-                  value={user.email || ""}
-                  disabled
-                  className={`${inputClass} opacity-70 cursor-not-allowed`}
-                />
-              </div>
-            </div>
+          <div className="glass-card lux-hero rounded-[30px] p-7">
+            <h3 className="text-3xl font-black section-title">
+              Settings Control Center
+            </h3>
+            <p className="section-subtitle mt-3">
+              Personalize your theme, timer behavior, study goals, and monitoring preferences.
+            </p>
           </div>
 
           <div className={cardClass}>
             <h3 className="text-2xl font-black section-title">Appearance</h3>
+
             <div className="mt-6">
               <label className="block text-sm label-text mb-2">Theme Mode</label>
               <select
-                value={theme}
-                onChange={(e) => setTheme(e.target.value)}
+                value={settings.theme}
+                onChange={(e) => handleChange("theme", e.target.value)}
                 className={inputClass}
               >
                 <option value="light">Light Theme</option>
@@ -127,6 +157,7 @@ function Settings() {
 
           <div className={cardClass}>
             <h3 className="text-2xl font-black section-title">Focus Preferences</h3>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               <div>
                 <label className="block text-sm label-text mb-2">
@@ -134,10 +165,11 @@ function Settings() {
                 </label>
                 <input
                   type="number"
-                  min="15"
-                  max="90"
-                  value={focusDuration}
-                  onChange={(e) => setFocusDuration(Number(e.target.value))}
+                  min="1"
+                  value={settings.focusDuration}
+                  onChange={(e) =>
+                    handleChange("focusDuration", Number(e.target.value))
+                  }
                   className={inputClass}
                 />
               </div>
@@ -149,89 +181,14 @@ function Settings() {
                 <input
                   type="number"
                   min="1"
-                  max="30"
-                  value={breakDuration}
-                  onChange={(e) => setBreakDuration(Number(e.target.value))}
+                  value={settings.breakDuration}
+                  onChange={(e) =>
+                    handleChange("breakDuration", Number(e.target.value))
+                  }
                   className={inputClass}
                 />
               </div>
-            </div>
 
-            <div className="space-y-4 mt-6">
-              <label className="flex items-center justify-between metric-card rounded-xl p-4">
-                <span className="metric-value font-medium">Auto Start Breaks</span>
-                <input
-                  type="checkbox"
-                  checked={autoStartBreaks}
-                  onChange={(e) => setAutoStartBreaks(e.target.checked)}
-                  className="w-5 h-5"
-                />
-              </label>
-
-              <label className="flex items-center justify-between metric-card rounded-xl p-4">
-                <span className="metric-value font-medium">Auto Start Next Focus Session</span>
-                <input
-                  type="checkbox"
-                  checked={autoStartFocus}
-                  onChange={(e) => setAutoStartFocus(e.target.checked)}
-                  className="w-5 h-5"
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className={cardClass}>
-            <h3 className="text-2xl font-black section-title">Monitoring & Privacy</h3>
-
-            <div className="space-y-4 mt-6">
-              <label className="flex items-center justify-between metric-card rounded-xl p-4">
-                <span className="metric-value font-medium">Enable Notifications</span>
-                <input
-                  type="checkbox"
-                  checked={notifications}
-                  onChange={(e) => setNotifications(e.target.checked)}
-                  className="w-5 h-5"
-                />
-              </label>
-
-              <label className="flex items-center justify-between metric-card rounded-xl p-4">
-                <span className="metric-value font-medium">Enable Webcam Monitoring</span>
-                <input
-                  type="checkbox"
-                  checked={webcamMonitoring}
-                  onChange={(e) => setWebcamMonitoring(e.target.checked)}
-                  className="w-5 h-5"
-                />
-              </label>
-
-              <label className="flex items-center justify-between metric-card rounded-xl p-4">
-                <span className="metric-value font-medium">Enable Tab Switch Tracking</span>
-                <input
-                  type="checkbox"
-                  checked={tabTracking}
-                  onChange={(e) => setTabTracking(e.target.checked)}
-                  className="w-5 h-5"
-                />
-              </label>
-
-              <label className="flex items-center justify-between metric-card rounded-xl p-4">
-                <span className="metric-value font-medium">Enable Idle Tracking</span>
-                <input
-                  type="checkbox"
-                  checked={idleTracking}
-                  onChange={(e) => setIdleTracking(e.target.checked)}
-                  className="w-5 h-5"
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className={cardClass}>
-            <h3 className="text-2xl font-black section-title">
-              Productivity Preferences
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               <div>
                 <label className="block text-sm label-text mb-2">
                   Daily Goal (hours)
@@ -239,50 +196,88 @@ function Settings() {
                 <input
                   type="number"
                   min="1"
-                  max="16"
-                  value={dailyGoal}
-                  onChange={(e) => setDailyGoal(Number(e.target.value))}
+                  value={settings.dailyGoal}
+                  onChange={(e) =>
+                    handleChange("dailyGoal", Number(e.target.value))
+                  }
                   className={inputClass}
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm label-text mb-2">
-                  Burnout Sensitivity
-                </label>
-                <select
-                  value={burnoutSensitivity}
-                  onChange={(e) => setBurnoutSensitivity(e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <button
-              onClick={handleSaveSettings}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition"
-            >
-              Save Settings
-            </button>
+          <div className={cardClass}>
+            <h3 className="text-2xl font-black section-title">Automation</h3>
 
-            <button
-              onClick={handleResetAnalytics}
-              className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition"
-            >
-              Reset Analytics
-            </button>
+            <div className="mt-6 space-y-4">
+              <ToggleRow
+                label="Auto Start Breaks"
+                checked={settings.autoStartBreaks}
+                onChange={(value) => handleChange("autoStartBreaks", value)}
+              />
 
-            {savedMessage && (
-              <p className="text-green-600 dark:text-green-400 font-medium">
-                {savedMessage}
-              </p>
-            )}
+              <ToggleRow
+                label="Auto Start Next Focus Session"
+                checked={settings.autoStartFocus}
+                onChange={(value) => handleChange("autoStartFocus", value)}
+              />
+            </div>
+          </div>
+
+          <div className={cardClass}>
+            <h3 className="text-2xl font-black section-title">Monitoring & Privacy</h3>
+
+            <div className="mt-6 space-y-4">
+              <ToggleRow
+                label="Enable Notifications"
+                checked={settings.notifications}
+                onChange={(value) => handleChange("notifications", value)}
+              />
+
+              <ToggleRow
+                label="Enable Webcam Monitoring"
+                checked={settings.webcamMonitoring}
+                onChange={(value) => handleChange("webcamMonitoring", value)}
+              />
+
+              <ToggleRow
+                label="Enable Tab Switch Tracking"
+                checked={settings.tabTracking}
+                onChange={(value) => handleChange("tabTracking", value)}
+              />
+
+              <ToggleRow
+                label="Enable Idle Tracking"
+                checked={settings.idleTracking}
+                onChange={(value) => handleChange("idleTracking", value)}
+              />
+            </div>
+          </div>
+
+          <div className={cardClass}>
+            <h3 className="text-2xl font-black section-title">Analytics Controls</h3>
+
+            <div className="mt-6 flex flex-wrap gap-4">
+              <button
+                onClick={handleSaveAll}
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-6 py-3 rounded-xl font-semibold transition"
+              >
+                Save Settings
+              </button>
+
+              <button
+                onClick={handleResetAnalytics}
+                className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition"
+              >
+                Reset Analytics
+              </button>
+
+              {savedMessage && (
+                <p className="self-center font-medium text-green-600 dark:text-green-400">
+                  {savedMessage}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -293,22 +288,15 @@ function Settings() {
             </h3>
 
             <div className="space-y-4">
-              <div className="metric-card rounded-xl p-4">
-                <p className="metric-title text-sm">Theme</p>
-                <p className="metric-value font-semibold mt-1 capitalize">{theme}</p>
-              </div>
-
-              <div className="metric-card rounded-xl p-4">
-                <p className="metric-title text-sm">Focus / Break</p>
-                <p className="metric-value font-semibold mt-1">
-                  {focusDuration} min / {breakDuration} min
-                </p>
-              </div>
-
-              <div className="metric-card rounded-xl p-4">
-                <p className="metric-title text-sm">Daily Goal</p>
-                <p className="metric-value font-semibold mt-1">{dailyGoal} hours</p>
-              </div>
+              <InfoCard label="Theme" value={currentTheme} />
+              <InfoCard
+                label="Focus / Break"
+                value={`${settings.focusDuration} min / ${settings.breakDuration} min`}
+              />
+              <InfoCard
+                label="Daily Goal"
+                value={`${settings.dailyGoal} hour${settings.dailyGoal > 1 ? "s" : ""}`}
+              />
             </div>
           </div>
 
@@ -316,7 +304,8 @@ function Settings() {
             <h3 className="text-2xl font-black section-title mb-4">
               Recommendations
             </h3>
-            <div className="space-y-3 text-sm section-subtitle">
+
+            <div className="space-y-3 section-subtitle">
               <p>• Use dark mode for longer study sessions at night.</p>
               <p>• Shorter sessions help if distractions are frequent.</p>
               <p>• Keep webcam and tab tracking on for better focus analytics.</p>
@@ -326,6 +315,39 @@ function Settings() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+function ToggleRow({ label, checked, onChange }) {
+  return (
+    <div className="metric-card rounded-[22px] px-5 py-4 flex items-center justify-between">
+      <p className="font-semibold metric-value">{label}</p>
+
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className={`relative w-14 h-8 rounded-full transition ${
+          checked
+            ? "bg-gradient-to-r from-amber-500 to-yellow-500"
+            : "bg-slate-300 dark:bg-slate-700"
+        }`}
+      >
+        <span
+          className={`absolute top-1 w-6 h-6 rounded-full bg-white transition ${
+            checked ? "left-7" : "left-1"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
+function InfoCard({ label, value }) {
+  return (
+    <div className="metric-card rounded-xl p-4">
+      <p className="metric-title text-sm">{label}</p>
+      <p className="metric-value font-semibold mt-1">{value}</p>
+    </div>
   );
 }
 

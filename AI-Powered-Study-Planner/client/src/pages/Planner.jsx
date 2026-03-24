@@ -1,10 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
+import AppLoader from "../components/layout/AppLoader";
+import useMinimumLoader from "../hooks/useMinimumLoader";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 function Planner() {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
   const [loading, setLoading] = useState(true);
+  const loaderDelayDone = useMinimumLoader(500);
   const [error, setError] = useState("");
 
   const [plannerForm, setPlannerForm] = useState({
@@ -23,16 +29,21 @@ function Planner() {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch("http://localhost:5000/api/tasks", {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await fetch(`${API_BASE_URL}/tasks`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const data = await response.json();
 
-      if (!response.ok) throw new Error(data.message || "Failed to fetch tasks");
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch tasks");
+      }
+
       setTasks(data);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to fetch tasks");
     } finally {
       setLoading(false);
     }
@@ -51,41 +62,51 @@ function Planner() {
 
     try {
       const token = localStorage.getItem("token");
+      setError("");
 
-      const response = await fetch("http://localhost:5000/api/tasks", {
+      const response = await fetch(`${API_BASE_URL}/tasks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ title: newTask }),
+        body: JSON.stringify({ title: newTask.trim() }),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Failed to add task");
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to add task");
+      }
 
       setNewTask("");
       fetchTasks();
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to add task");
     }
   };
 
   const handleDeleteTask = async (id) => {
     try {
       const token = localStorage.getItem("token");
+      setError("");
 
-      const response = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Failed to delete task");
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete task");
+      }
 
       fetchTasks();
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to delete task");
     }
   };
 
@@ -100,7 +121,10 @@ function Planner() {
     const today = new Date();
     const deadlineDate = new Date(item.deadline);
     const diffTime = deadlineDate - today;
-    const daysLeft = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    const daysLeft = Math.max(
+      1,
+      Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    );
 
     const urgencyWeight = Math.max(1, 10 - daysLeft);
     const difficultyWeight = Number(item.difficulty) * 2;
@@ -146,8 +170,22 @@ function Planner() {
       .sort((a, b) => b.priorityScore - a.priorityScore);
   }, [plannedItems]);
 
+  if (loading || !loaderDelayDone) {
+    return (
+      <AppLayout
+        title="Smart Planner"
+        subtitle="Generate and manage your personalized study schedule"
+      >
+        <AppLoader message="Loading planner workspace..." />
+      </AppLayout>
+    );
+  }
+
   return (
-    <AppLayout title="Smart Planner" subtitle="Generate and manage your personalized study schedule">
+    <AppLayout
+      title="Smart Planner"
+      subtitle="Generate and manage your personalized study schedule"
+    >
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="space-y-6">
           <div className="glass-card lux-hero rounded-[30px] p-7">
@@ -155,7 +193,8 @@ function Planner() {
               Smart Planning Workspace
             </h3>
             <p className="section-subtitle mt-3 text-lg">
-              Add quick tasks, generate priority-based plans, and organize your study flow beautifully.
+              Add quick tasks, generate priority-based plans, and organize your
+              study flow beautifully.
             </p>
           </div>
 
@@ -183,12 +222,12 @@ function Planner() {
               </button>
             </div>
 
-            {error && <p className="text-red-500 text-sm font-medium mt-4">{error}</p>}
+            {error && (
+              <p className="text-red-500 text-sm font-medium mt-4">{error}</p>
+            )}
 
             <div className="mt-6 space-y-3">
-              {loading ? (
-                <p className="section-subtitle">Loading tasks...</p>
-              ) : tasks.length === 0 ? (
+              {tasks.length === 0 ? (
                 <p className="section-subtitle">No tasks added yet.</p>
               ) : (
                 tasks.map((task) => (
@@ -271,7 +310,9 @@ function Planner() {
 
             <div className="mt-6 space-y-4">
               {rankedPlan.length === 0 ? (
-                <p className="section-subtitle">No structured study plan generated yet.</p>
+                <p className="section-subtitle">
+                  No structured study plan generated yet.
+                </p>
               ) : (
                 rankedPlan.map((item, index) => (
                   <div key={item.id} className="metric-card rounded-[24px] p-5">

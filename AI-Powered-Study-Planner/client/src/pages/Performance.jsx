@@ -1,9 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
+import AppLoader from "../components/layout/AppLoader";
+import useMinimumLoader from "../hooks/useMinimumLoader";
 import { getStats } from "../services/statsService";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 function Performance() {
   const [taskCount, setTaskCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const loaderDelayDone = useMinimumLoader(500);
 
   const [stats, setStats] = useState({
     completedFocusSessions: 0,
@@ -22,7 +29,7 @@ function Performance() {
         const token = localStorage.getItem("token");
 
         const [taskResponse, statsData] = await Promise.all([
-          fetch("http://localhost:5000/tasks", {
+          fetch(`${API_BASE_URL}/tasks`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -45,6 +52,8 @@ function Performance() {
         });
       } catch (error) {
         console.error("Failed to fetch performance data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -96,7 +105,19 @@ function Performance() {
     return "Beginner";
   };
 
-  const cardClass = "glass-card rounded-[28px] p-6 border border-slate-200 dark:border-slate-800 transition-colors duration-300";
+  const cardClass =
+    "glass-card rounded-[28px] p-6 border border-slate-200 dark:border-slate-800 transition-colors duration-300";
+
+  if (loading || !loaderDelayDone) {
+    return (
+      <AppLayout
+        title="Performance"
+        subtitle="Review progress, focus analytics, and productivity trends"
+      >
+        <AppLoader message="Loading performance insights..." />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout
@@ -162,12 +183,16 @@ function Performance() {
             <div className="space-y-4">
               <div className="metric-card rounded-xl p-4 flex items-center justify-between">
                 <div>
-                  <p className="metric-title text-sm">Completed Focus Sessions</p>
+                  <p className="metric-title text-sm">
+                    Completed Focus Sessions
+                  </p>
                   <p className="text-lg font-semibold metric-value mt-1">
                     {stats.completedFocusSessions}
                   </p>
                 </div>
-                <span className="text-green-600 font-bold">+ Productivity</span>
+                <span className="text-green-600 font-bold">
+                  + Productivity
+                </span>
               </div>
 
               <div className="metric-card rounded-xl p-4 flex items-center justify-between">
@@ -177,7 +202,9 @@ function Performance() {
                     {taskCount}
                   </p>
                 </div>
-                <span className="text-blue-600 font-bold">+ Organization</span>
+                <span className="text-blue-600 font-bold">
+                  + Organization
+                </span>
               </div>
 
               <div className="metric-card rounded-xl p-4 flex items-center justify-between">
@@ -187,7 +214,9 @@ function Performance() {
                     {stats.distractedEvents}
                   </p>
                 </div>
-                <span className="text-orange-500 font-bold">- Focus Quality</span>
+                <span className="text-orange-500 font-bold">
+                  - Focus Quality
+                </span>
               </div>
 
               <div className="metric-card rounded-xl p-4 flex items-center justify-between">

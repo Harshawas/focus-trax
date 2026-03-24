@@ -2,9 +2,33 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>client</title>
+    <title>Focus Trax</title>
+
+    <script>
+      (function () {
+        try {
+          var rawTheme =
+            localStorage.getItem("theme") ||
+            localStorage.getItem("themeMode") ||
+            "light";
+
+          var normalizedTheme = /dark/i.test(rawTheme) ? "dark" : "light";
+
+          document.documentElement.dataset.theme = normalizedTheme;
+
+          if (normalizedTheme === "dark") {
+            document.documentElement.classList.add("dark");
+            document.documentElement.style.backgroundColor = "#060b16";
+            document.body.style.backgroundColor = "#060b16";
+          } else {
+            document.documentElement.classList.remove("dark");
+            document.documentElement.style.backgroundColor = "#f8f1e4";
+            document.body.style.backgroundColor = "#f8f1e4";
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

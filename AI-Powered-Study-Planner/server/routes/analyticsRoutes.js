@@ -1,6 +1,6 @@
 const express = require("express");
 const DailyAnalytics = require("../models/DailyAnalytics");
-const authMiddleware = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -25,21 +25,9 @@ function getLast7Days() {
   return days;
 }
 
-/**
- * Log today's analytics increments
- * body example:
- * {
- *   focusMinutes: 25,
- *   completedSessions: 1,
- *   distractedEvents: 1,
- *   tabSwitches: 1,
- *   windowBlurEvents: 1,
- *   warnings: 1
- * }
- */
-router.post("/log", authMiddleware, async (req, res) => {
+router.post("/log", protect, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const dateKey = getDateKey();
 
     const {
@@ -77,12 +65,9 @@ router.post("/log", authMiddleware, async (req, res) => {
   }
 });
 
-/**
- * Get last 7 days analytics for current user
- */
-router.get("/weekly", authMiddleware, async (req, res) => {
+router.get("/weekly", protect, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const days = getLast7Days();
     const dateKeys = days.map((d) => d.dateKey);
 
@@ -115,12 +100,9 @@ router.get("/weekly", authMiddleware, async (req, res) => {
   }
 });
 
-/**
- * Reset all daily analytics history for current user
- */
-router.delete("/reset", authMiddleware, async (req, res) => {
+router.delete("/reset", protect, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     await DailyAnalytics.deleteMany({ user: userId });
 
     res.status(200).json({ message: "Daily analytics reset successfully." });

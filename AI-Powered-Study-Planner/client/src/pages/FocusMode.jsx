@@ -4,10 +4,15 @@ import ToastMessage from "../components/common/ToastMessage";
 import { getStats, updateStats } from "../services/statsService";
 import { logDailyAnalytics } from "../services/analyticsService";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import AppLoader from "../components/layout/AppLoader";
+import useMinimumLoader from "../hooks/useMinimumLoader";
+import { addNotification } from "../services/notificationService";
 
 function FocusMode() {
   const savedFocus = Number(localStorage.getItem("focusDuration")) || 25;
   const savedBreak = Number(localStorage.getItem("breakDuration")) || 5;
+  const loaderDelayDone = useMinimumLoader(500);
+  const sessionCompletionLockedRef = useRef(false);
   const webcamMonitoring = localStorage.getItem("webcamMonitoring") !== "false";
   const tabTracking = localStorage.getItem("tabTracking") !== "false";
   const idleTracking = localStorage.getItem("idleTracking") !== "false";
@@ -289,65 +294,88 @@ function FocusMode() {
   }, [faceDetected, webcamMonitoring]);
 
   useEffect(() => {
-    let timer;
-    let completionTimer;
+  let timer;
 
-    if (isRunning && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0) {
-      completionTimer = setTimeout(async () => {
-        if (isFocusSession) {
-          const newCompleted = completedFocusSessions + 1;
-          setCompletedFocusSessions(newCompleted);
-          await syncStatsToDatabase({ completedFocusSessions: newCompleted });
+  if (isRunning && timeLeft > 0) {
+    timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+  }
 
-          await logDailyAnalytics({
-            focusMinutes: savedFocus,
-            completedSessions: 1,
-          });
+  if (timeLeft === 0 && !sessionCompletionLockedRef.current) {
+    sessionCompletionLockedRef.current = true;
 
-          showToast("success", "Focus session completed.");
-          showBrowserNotification(
-            "Focus Session Complete",
-            "Time for a short break."
-          );
+    const handleSessionComplete = async () => {
+      if (isFocusSession) {
+        const newCompleted = completedFocusSessions + 1;
+        setCompletedFocusSessions(newCompleted);
 
-          setIsFocusSession(false);
-          setTimeLeft(breakTime);
-          setIsRunning(autoStartBreaks);
-        } else {
-          showToast("info", "Break session completed.");
-          showBrowserNotification(
-            "Break Complete",
-            "Your next focus session is ready."
-          );
+        await syncStatsToDatabase({
+          completedFocusSessions: newCompleted,
+        });
 
-          setIsFocusSession(true);
-          setTimeLeft(focusTime);
-          setIsRunning(autoStartFocus);
-        }
-      }, 0);
-    }
+        await logDailyAnalytics({
+          focusMinutes: savedFocus,
+          completedSessions: 1,
+        });
 
-    return () => {
-      if (timer) clearInterval(timer);
-      if (completionTimer) clearTimeout(completionTimer);
+        addNotification({
+          title: "Focus Session Complete",
+          message: `You completed a ${savedFocus}-minute focus session.`,
+          type: "success",
+        });
+
+        showToast("success", "Focus session completed.");
+        showBrowserNotification(
+          "Focus Session Complete",
+          "Time for a short break."
+        );
+
+        setIsFocusSession(false);
+        setTimeLeft(breakTime);
+        setIsRunning(autoStartBreaks);
+      } else {
+        addNotification({
+          title: "Break Complete",
+          message: "Your next focus session is ready to start.",
+          type: "info",
+        });
+
+        showToast("info", "Break session completed.");
+        showBrowserNotification(
+          "Break Complete",
+          "Your next focus session is ready."
+        );
+
+        setIsFocusSession(true);
+        setTimeLeft(focusTime);
+        setIsRunning(autoStartFocus);
+      }
+
+      setTimeout(() => {
+        sessionCompletionLockedRef.current = false;
+      }, 100);
     };
-  }, [
-    isRunning,
-    timeLeft,
-    isFocusSession,
-    completedFocusSessions,
-    syncStatsToDatabase,
-    savedFocus,
-    breakTime,
-    focusTime,
-    autoStartBreaks,
-    autoStartFocus,
-    showBrowserNotification,
-  ]);
+
+    handleSessionComplete();
+  }
+
+  return () => {
+    if (timer) clearInterval(timer);
+  };
+}, [
+  isRunning,
+  timeLeft,
+  isFocusSession,
+  completedFocusSessions,
+  syncStatsToDatabase,
+  savedFocus,
+  breakTime,
+  focusTime,
+  autoStartBreaks,
+  autoStartFocus,
+  showBrowserNotification,
+]);
 
   useEffect(() => {
     if (!tabTracking) return;
@@ -395,7 +423,11 @@ function FocusMode() {
 
     if (faceMissingSeconds === 10 && !warningTwoLoggedRef.current) {
       warningTwoLoggedRef.current = true;
-
+addNotification({
+  title: "Focus Warning",
+  message: "Your face is not detected. Please return to the screen.",
+  type: "warning",
+});
       delayedUpdate = setTimeout(async () => {
         const newWarnings = warningCount + 1;
         setWarningCount(newWarnings);
@@ -411,7 +443,11 @@ function FocusMode() {
 
     if (faceMissingSeconds >= 15 && !distractedIncrementedRef.current) {
       distractedIncrementedRef.current = true;
-
+addNotification({
+  title: "Focus Warning",
+  message: "Your face is not detected. Please return to the screen.",
+  type: "warning",
+});
       delayedUpdate = setTimeout(async () => {
         const newDistracted = distractedEvents + 1;
         setDistractedEvents(newDistracted);
@@ -444,6 +480,7 @@ function FocusMode() {
   };
 
   const handleSkip = () => {
+    sessionCompletionLockedRef.current = false;
     if (isFocusSession) {
       setIsFocusSession(false);
       setTimeLeft(breakTime);
@@ -455,6 +492,7 @@ function FocusMode() {
   };
 
   const handleEndSession = () => {
+    sessionCompletionLockedRef.current = false;
     setIsRunning(false);
     setIsFocusSession(true);
     setTimeLeft(focusTime);
@@ -467,6 +505,16 @@ function FocusMode() {
     showToast("info", "Session ended and timer reset.");
   };
 
+  if (!loaderDelayDone) {
+  return (
+    <AppLayout
+      title="Focus Mode"
+      subtitle="Track live study engagement and focus sessions"
+    >
+      <AppLoader message="Initializing focus monitoring..." />
+    </AppLayout>
+  );
+}
   return (
     <AppLayout
       title="Focus Mode"

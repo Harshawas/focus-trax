@@ -10,12 +10,19 @@ function AuthShell({
   sideText,
   mode = "login",
 }) {
-  const dark = document.documentElement.classList.contains("dark");
+  const dark =
+    typeof document !== "undefined" &&
+    document.documentElement.dataset.theme === "dark";
 
   return (
-    <div className="min-h-screen auth-gold-bg flex items-center justify-center px-4 py-8 overflow-hidden">
+    <div
+      className="min-h-screen auth-gold-bg flex items-center justify-center px-4 py-8 overflow-hidden"
+      style={{
+        backgroundColor: dark ? "#060b16" : "#f8f1e4",
+      }}
+    >
       <motion.div
-        key={mode}
+        key={`${mode}-${dark ? "dark" : "light"}`}
         initial={{ opacity: 0, scale: 0.985 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
@@ -30,16 +37,14 @@ function AuthShell({
           >
             <div className="relative z-10 max-w-xl">
               <p className="text-sm uppercase tracking-[0.34em] text-amber-600 dark:text-amber-300 font-bold">
-                AI Powered Study Planner
+                AI Powered Focus Tracker
               </p>
 
               <h1 className="mt-5 text-6xl leading-[0.95] font-black auth-heading">
                 {title}
               </h1>
 
-              <p className="mt-5 text-xl auth-subtext">
-                {subtitle}
-              </p>
+              <p className="mt-5 text-xl auth-subtext">{subtitle}</p>
 
               <div className="mt-10">{children}</div>
             </div>
@@ -49,13 +54,23 @@ function AuthShell({
             initial={{ opacity: 0, x: mode === "login" ? 30 : -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.68 }}
-            className="glass-card rounded-[40px] relative overflow-hidden min-h-[720px] hidden lg:block"
+            className="rounded-[40px] relative overflow-hidden min-h-[720px] hidden lg:block"
+            style={{
+              backgroundColor: dark ? "#060b16" : "#f8f1e4",
+            }}
           >
             <div className="absolute inset-0 pointer-events-none">
-  <AuthScene dark={dark} />
-</div>
+              <AuthScene key={dark ? "auth-dark" : "auth-light"} dark={dark} />
+            </div>
 
-<div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/20 via-transparent to-transparent dark:from-black/10" />
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: dark
+                  ? "linear-gradient(to bottom right, rgba(0,0,0,0.10), transparent)"
+                  : "linear-gradient(to bottom right, rgba(255,255,255,0.20), transparent)",
+              }}
+            />
 
             <div className="relative z-10 p-10 h-full flex flex-col justify-between">
               <div className="max-w-md">

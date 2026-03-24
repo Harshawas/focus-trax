@@ -7,6 +7,14 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    username: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      sparse: true,
+      default: null,
+    },
     email: {
       type: String,
       required: true,
@@ -38,6 +46,23 @@ const userSchema = new mongoose.Schema(
     otpExpiresAt: {
       type: Date,
       default: null,
+    },
+
+    avatarUrl: {
+      type: String,
+      default: "",
+    },
+    age: {
+      type: Number,
+      default: null,
+    },
+    linkedinUrl: {
+      type: String,
+      default: "",
+    },
+    bio: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true }

@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import { GoogleLogin } from "@react-oauth/google";
 import AuthShell from "../../components/auth/AuthShell";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
 function Signup() {
   const navigate = useNavigate();
-
   const [step, setStep] = useState("signup");
 
   const [formData, setFormData] = useState({
@@ -55,16 +57,13 @@ function Signup() {
     }
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/auth/signup-initiate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/auth/signup-initiate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
       const data = await response.json();
 
@@ -88,19 +87,16 @@ function Signup() {
     setMessage("");
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/auth/signup-verify`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            otp,
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/auth/signup-verify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          otp,
+        }),
+      });
 
       const data = await response.json();
 
@@ -122,18 +118,15 @@ function Signup() {
     try {
       setError("");
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/auth/google`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            credential: credentialResponse.credential,
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          credential: credentialResponse.credential,
+        }),
+      });
 
       const data = await response.json();
 
@@ -207,7 +200,8 @@ function Signup() {
               autoComplete="new-password"
             />
             <p className="text-xs auth-subtext mt-2">
-              Must contain 8+ characters, uppercase, lowercase, number, and symbol.
+              Must contain 8+ characters, uppercase, lowercase, number, and
+              symbol.
             </p>
           </div>
 

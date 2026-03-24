@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import AppLoader from "../components/layout/AppLoader";
+import useMinimumLoader from "../hooks/useMinimumLoader";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,9 +24,13 @@ ChartJS.register(
   Legend
 );
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
 function Dashboard() {
   const [userName, setUserName] = useState("User");
   const [taskCount, setTaskCount] = useState(0);
+  const loaderDelayDone = useMinimumLoader(500);
   const [loading, setLoading] = useState(true);
   const [weeklyAnalytics, setWeeklyAnalytics] = useState([]);
 
@@ -39,7 +44,10 @@ function Dashboard() {
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
-    if (user?.name) setUserName(user.name);
+    if (user?.name) {
+      setUserName(user.name);
+    }
+
     loadDashboardData();
   }, []);
 
@@ -48,7 +56,7 @@ function Dashboard() {
       const token = localStorage.getItem("token");
 
       const [taskResponse, statsData, weeklyData] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/tasks`, {
+        fetch(`${API_BASE_URL}/tasks`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -139,7 +147,7 @@ function Dashboard() {
     ],
   };
 
-  if (loading) {
+  if (loading || !loaderDelayDone) {
     return (
       <AppLayout
         title="Dashboard"

@@ -7,8 +7,10 @@ import {
   BarChart3,
   Sparkles,
   Settings,
+  User,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import FocusFlowLogo from "../branding/FocusFlowLogo";
 
 function Sidebar() {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ function Sidebar() {
     { to: "/focus", label: "Focus Mode", icon: TimerReset },
     { to: "/performance", label: "Performance", icon: BarChart3 },
     { to: "/suggestions", label: "AI Suggestions", icon: Sparkles },
+    { to: "/profile", label: "Profile", icon: User },
     { to: "/settings", label: "Settings", icon: Settings },
   ];
 
@@ -38,10 +41,7 @@ function Sidebar() {
       <div className="glass-card sparkle-overlay rounded-[32px] h-full p-5 flex flex-col justify-between">
         <div className="relative z-10">
           <div className="pb-5 border-b border-amber-200/30 dark:border-white/10">
-            <h1 className="text-3xl font-black gold-text">Smart Planner</h1>
-            <p className="section-subtitle mt-2 font-medium">
-              Focus Tracking System
-            </p>
+            <FocusFlowLogo size={52} />
           </div>
 
           <nav className="mt-6 space-y-2">
@@ -69,11 +69,38 @@ function Sidebar() {
         </div>
 
         <div className="relative z-10 rounded-[24px] bg-white/65 dark:bg-white/5 border border-amber-200/40 dark:border-white/10 p-4">
-          <p className="text-sm metric-title">Logged in as</p>
-          <p className="font-bold metric-value mt-1">{user.name || "User"}</p>
+          <div className="flex items-center gap-3">
+            {user.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt="User"
+                className="w-12 h-12 rounded-full object-cover border border-amber-200 dark:border-white/10"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-amber-100 dark:bg-slate-800 text-lg font-black gold-text">
+                {(user.name || "U").charAt(0)}
+              </div>
+            )}
+
+            <div className="min-w-0">
+              <p className="text-sm metric-title">Logged in as</p>
+              <p className="font-bold metric-value truncate">{user.name || "User"}</p>
+              {user.username ? (
+                <p className="text-xs section-subtitle truncate">@{user.username}</p>
+              ) : null}
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigate("/profile")}
+            className="mt-4 w-full rounded-2xl bg-white/70 dark:bg-white/8 border border-amber-200/40 dark:border-white/10 py-3 font-bold section-title transition"
+          >
+            View Profile
+          </button>
+
           <button
             onClick={handleLogout}
-            className="mt-4 w-full rounded-2xl bg-red-500 hover:bg-red-600 text-white py-3 font-bold transition"
+            className="mt-3 w-full rounded-2xl bg-red-500 hover:bg-red-600 text-white py-3 font-bold transition"
           >
             Logout
           </button>

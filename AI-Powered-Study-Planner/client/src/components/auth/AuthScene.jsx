@@ -8,7 +8,8 @@ function PremiumPlanet({ dark }) {
   useFrame((state) => {
     if (!groupRef.current) return;
     groupRef.current.rotation.y = state.clock.elapsedTime * 0.22;
-    groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.18) * 0.05;
+    groupRef.current.rotation.x =
+      Math.sin(state.clock.elapsedTime * 0.18) * 0.05;
   });
 
   const planetColor = dark ? "#cf8c1f" : "#8c5400";
@@ -44,17 +45,27 @@ function PremiumPlanet({ dark }) {
 }
 
 function AuthScene({ dark = false }) {
-  const bg = useMemo(() => (dark ? "#0a0c12" : "#f8f1e4"), [dark]);
+  const bg = useMemo(() => (dark ? "#060b16" : "#f8f1e4"), [dark]);
 
   return (
-    <div className="absolute inset-0">
-      <Canvas camera={{ position: [0, 0, 5.5], fov: 40 }}>
+    <div
+      className="absolute inset-0"
+      style={{ backgroundColor: bg }}
+    >
+      <Canvas
+        dpr={[1, 2]}
+        gl={{ alpha: false, antialias: true, powerPreference: "high-performance" }}
+        camera={{ position: [0, 0, 5.5], fov: 40 }}
+        style={{ background: bg }}
+      >
         <color attach="background" args={[bg]} />
         <ambientLight intensity={1.45} />
         <directionalLight position={[3, 4, 3]} intensity={2.4} />
-        <pointLight position={[-4, 0, 3]} intensity={2.5} color={"#ffd27a"} />
-        <pointLight position={[3, 1, 2]} intensity={2.2} color={"#fff2d2"} />
+        <pointLight position={[-4, 0, 3]} intensity={2.5} color="#ffd27a" />
+        <pointLight position={[3, 1, 2]} intensity={2.2} color="#fff2d2" />
+
         <PremiumPlanet dark={dark} />
+
         <Sparkles
           count={140}
           scale={8}
@@ -62,6 +73,7 @@ function AuthScene({ dark = false }) {
           speed={0.55}
           color={dark ? "#ffd27a" : "#c6911f"}
         />
+
         <OrbitControls
           enableZoom={false}
           enablePan={false}

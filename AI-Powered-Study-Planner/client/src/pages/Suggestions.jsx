@@ -1,9 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
+import AppLoader from "../components/layout/AppLoader";
+import useMinimumLoader from "../hooks/useMinimumLoader";
 import { getStats } from "../services/statsService";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 function Suggestions() {
   const [taskCount, setTaskCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const loaderDelayDone = useMinimumLoader(500);
+
   const [stats, setStats] = useState({
     completedFocusSessions: 0,
     distractedEvents: 0,
@@ -21,7 +29,7 @@ function Suggestions() {
         const token = localStorage.getItem("token");
 
         const [taskResponse, statsData] = await Promise.all([
-          fetch("http://localhost:5000/tasks", {
+          fetch(`${API_BASE_URL}/tasks`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -44,6 +52,8 @@ function Suggestions() {
         });
       } catch (error) {
         console.error("Failed to fetch suggestion data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -161,6 +171,17 @@ function Suggestions() {
   const cardClass =
     "glass-card rounded-[28px] p-6 border border-slate-200 dark:border-slate-800 transition-colors duration-300";
 
+  if (loading || !loaderDelayDone) {
+    return (
+      <AppLayout
+        title="AI Suggestions"
+        subtitle="Adaptive study guidance based on your focus and productivity patterns"
+      >
+        <AppLoader message="Generating AI suggestions..." />
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout
       title="AI Suggestions"
@@ -186,7 +207,9 @@ function Suggestions() {
                   item.type
                 )}`}
               >
-                <h4 className="text-xl font-black section-title">{item.title}</h4>
+                <h4 className="text-xl font-black section-title">
+                  {item.title}
+                </h4>
                 <p className="section-subtitle mt-2">{item.description}</p>
               </div>
             ))}

@@ -1,12 +1,18 @@
-const API_URL = "http://localhost:5000/api/stats";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-export const getStats = async () => {
+function getAuthHeaders() {
   const token = localStorage.getItem("token");
 
-  const response = await fetch(API_URL, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+export async function getStats() {
+  const response = await fetch(`${API_BASE_URL}/api/stats`, {
+    headers: getAuthHeaders(),
   });
 
   const data = await response.json();
@@ -16,18 +22,13 @@ export const getStats = async () => {
   }
 
   return data;
-};
+}
 
-export const updateStats = async (statsPayload) => {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(API_URL, {
+export async function updateStats(statsData) {
+  const response = await fetch(`${API_BASE_URL}/api/stats`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(statsPayload),
+    headers: getAuthHeaders(),
+    body: JSON.stringify(statsData),
   });
 
   const data = await response.json();
@@ -37,16 +38,12 @@ export const updateStats = async (statsPayload) => {
   }
 
   return data;
-};
+}
 
-export const resetStats = async () => {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(`${API_URL}/reset`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+export async function resetStats() {
+  const response = await fetch(`${API_BASE_URL}/api/stats/reset`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
   });
 
   const data = await response.json();
@@ -56,4 +53,4 @@ export const resetStats = async () => {
   }
 
   return data;
-};
+}
