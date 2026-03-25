@@ -5,3 +5,5 @@ dist
 build
 client-cra-backup
 .env
+server/.env
+client/.env
