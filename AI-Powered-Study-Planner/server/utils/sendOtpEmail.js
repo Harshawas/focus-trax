@@ -1,17 +1,23 @@
 const nodemailer = require("nodemailer");
 
 function createTransporter() {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error("EMAIL_USER or EMAIL_PASS is missing in environment variables");
+  if (
+    !process.env.SMTP_HOST ||
+    !process.env.SMTP_PORT ||
+    !process.env.SMTP_USER ||
+    !process.env.SMTP_PASS ||
+    !process.env.EMAIL_FROM
+  ) {
+    throw new Error("SMTP environment variables are missing");
   }
 
   return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: false,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
     },
     connectionTimeout: 10000,
     greetingTimeout: 10000,
@@ -23,7 +29,7 @@ async function sendOtpEmail(email, name, otp) {
   const transporter = createTransporter();
 
   await transporter.sendMail({
-    from: `"Focus Trax" <${process.env.EMAIL_USER}>`,
+    from: `"Focus Trax" <${process.env.EMAIL_FROM}>`,
     to: email,
     subject: "Verify your Focus Trax account",
     html: `
