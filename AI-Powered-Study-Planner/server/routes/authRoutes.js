@@ -73,24 +73,35 @@ router.post("/signup", async (req, res) => {
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     if (!existingUser) {
-      await User.create({
-        name: name.trim(),
-        email: normalizedEmail,
-        password: hashedPassword,
-        authProvider: "local",
-        isVerified: false,
-        otpCode: otp,
-        otpExpiresAt,
-      });
-    } else {
-      existingUser.name = name.trim();
-      existingUser.password = hashedPassword;
-      existingUser.authProvider = "local";
-      existingUser.isVerified = false;
-      existingUser.otpCode = otp;
-      existingUser.otpExpiresAt = otpExpiresAt;
-      await existingUser.save();
-    }
+  const newUserData = {
+    name: name.trim(),
+    email: normalizedEmail,
+    password: hashedPassword,
+    authProvider: "local",
+    isVerified: false,
+    otpCode: otp,
+    otpExpiresAt,
+  };
+
+  if (req.body.username) {
+    newUserData.username = req.body.username.toLowerCase().trim();
+  }
+
+  await User.create(newUserData);
+} else {
+  existingUser.name = name.trim();
+  existingUser.password = hashedPassword;
+  existingUser.authProvider = "local";
+  existingUser.isVerified = false;
+  existingUser.otpCode = otp;
+  existingUser.otpExpiresAt = otpExpiresAt;
+
+  if (req.body.username) {
+    existingUser.username = req.body.username.toLowerCase().trim();
+  }
+
+  await existingUser.save();
+}
 
     await sendOtpEmail(normalizedEmail, name.trim(), otp);
 
