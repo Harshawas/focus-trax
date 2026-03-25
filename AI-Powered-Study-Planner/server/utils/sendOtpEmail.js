@@ -1,35 +1,31 @@
 const nodemailer = require("nodemailer");
 
 function createTransporter() {
-  if (
-    !process.env.SMTP_HOST ||
-    !process.env.SMTP_PORT ||
-    !process.env.SMTP_USER ||
-    !process.env.SMTP_PASS ||
-    !process.env.EMAIL_FROM
-  ) {
-    throw new Error("SMTP environment variables are missing");
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error("EMAIL_USER or EMAIL_PASS is missing");
   }
 
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: false,
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
     },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
   });
 }
 
 async function sendOtpEmail(email, name, otp) {
   const transporter = createTransporter();
 
+  await transporter.verify();
+
   await transporter.sendMail({
-    from: `"Focus Trax" <${process.env.EMAIL_FROM}>`,
+    from: `"Focus Trax" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Verify your Focus Trax account",
     html: `
@@ -43,9 +39,6 @@ async function sendOtpEmail(email, name, otp) {
         </div>
         <p style="font-size: 14px; color: #4b5563;">
           This OTP is valid for 10 minutes.
-        </p>
-        <p style="font-size: 14px; color: #4b5563;">
-          If you did not request this, please ignore this email.
         </p>
       </div>
     `,
