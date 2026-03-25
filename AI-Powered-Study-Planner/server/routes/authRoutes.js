@@ -16,7 +16,7 @@ function generateToken(user) {
   return jwt.sign(
     {
       id: user._id,
-      email: user.email
+      email: user.email,
     },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
@@ -30,7 +30,7 @@ function generateOtp() {
 /**
  * STEP 1: Email signup -> send OTP
  */
-router.post("/signup-initiate", async (req, res) => {
+router.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -48,11 +48,21 @@ router.post("/signup-initiate", async (req, res) => {
     const normalizedEmail = email.toLowerCase().trim();
     const existingUser = await User.findOne({ email: normalizedEmail });
 
-    if (existingUser && existingUser.isVerified && existingUser.authProvider === "local") {
-      return res.status(400).json({ message: "User already exists. Please login." });
+    if (
+      existingUser &&
+      existingUser.isVerified &&
+      existingUser.authProvider === "local"
+    ) {
+      return res
+        .status(400)
+        .json({ message: "User already exists. Please login." });
     }
 
-    if (existingUser && existingUser.isVerified && existingUser.authProvider === "google") {
+    if (
+      existingUser &&
+      existingUser.isVerified &&
+      existingUser.authProvider === "google"
+    ) {
       return res.status(400).json({
         message: "This email is already registered with Google login.",
       });
@@ -84,24 +94,28 @@ router.post("/signup-initiate", async (req, res) => {
 
     await sendOtpEmail(normalizedEmail, name.trim(), otp);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "OTP sent successfully to your email.",
     });
   } catch (error) {
-    console.error("signup-initiate error:", error);
-    res.status(500).json({ message: "Server error during signup initiation." });
+    console.error("signup error:", error);
+    return res.status(500).json({
+      message: "Server error during signup initiation.",
+    });
   }
 });
 
 /**
  * STEP 2: Verify OTP and activate account
  */
-router.post("/signup-verify", async (req, res) => {
+router.post("/verify-otp", async (req, res) => {
   try {
     const { email, otp } = req.body;
 
     if (!email || !otp) {
-      return res.status(400).json({ message: "Email and OTP are required." });
+      return res
+        .status(400)
+        .json({ message: "Email and OTP are required." });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
@@ -112,15 +126,21 @@ router.post("/signup-verify", async (req, res) => {
     }
 
     if (user.isVerified) {
-      return res.status(400).json({ message: "Account already verified. Please login." });
+      return res
+        .status(400)
+        .json({ message: "Account already verified. Please login." });
     }
 
     if (!user.otpCode || !user.otpExpiresAt) {
-      return res.status(400).json({ message: "OTP not found. Please sign up again." });
+      return res
+        .status(400)
+        .json({ message: "OTP not found. Please sign up again." });
     }
 
     if (new Date() > user.otpExpiresAt) {
-      return res.status(400).json({ message: "OTP expired. Please sign up again." });
+      return res
+        .status(400)
+        .json({ message: "OTP expired. Please sign up again." });
     }
 
     if (user.otpCode !== otp.trim()) {
@@ -134,7 +154,7 @@ router.post("/signup-verify", async (req, res) => {
 
     const token = generateToken(user);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Account verified successfully.",
       token,
       user: {
@@ -145,8 +165,10 @@ router.post("/signup-verify", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("signup-verify error:", error);
-    res.status(500).json({ message: "Server error during OTP verification." });
+    console.error("verify-otp error:", error);
+    return res.status(500).json({
+      message: "Server error during OTP verification.",
+    });
   }
 });
 
@@ -161,7 +183,9 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid email or password." });
+      return res
+        .status(400)
+        .json({ message: "Invalid email or password." });
     }
 
     if (user.authProvider === "google" && !user.password) {
@@ -179,12 +203,14 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password || "");
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid email or password." });
+      return res
+        .status(400)
+        .json({ message: "Invalid email or password." });
     }
 
     const token = generateToken(user);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Login successful.",
       token,
       user: {
@@ -196,7 +222,7 @@ router.post("/login", async (req, res) => {
     });
   } catch (error) {
     console.error("login error:", error);
-    res.status(500).json({ message: "Server error during login." });
+    return res.status(500).json({ message: "Server error during login." });
   }
 });
 
@@ -208,7 +234,9 @@ router.post("/google", async (req, res) => {
     const { credential } = req.body;
 
     if (!credential) {
-      return res.status(400).json({ message: "Google credential is required." });
+      return res
+        .status(400)
+        .json({ message: "Google credential is required." });
     }
 
     const ticket = await googleClient.verifyIdToken({
@@ -219,7 +247,9 @@ router.post("/google", async (req, res) => {
     const payload = ticket.getPayload();
 
     if (!payload?.email) {
-      return res.status(400).json({ message: "Unable to fetch Google account email." });
+      return res
+        .status(400)
+        .json({ message: "Unable to fetch Google account email." });
     }
 
     const email = payload.email.toLowerCase().trim();
@@ -237,7 +267,6 @@ router.post("/google", async (req, res) => {
         isVerified: true,
       });
     } else {
-      // Link Google to existing account if same email
       user.name = user.name || name;
       user.googleId = googleId;
       if (!user.isVerified) user.isVerified = true;
@@ -247,7 +276,7 @@ router.post("/google", async (req, res) => {
 
     const token = generateToken(user);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Google authentication successful.",
       token,
       user: {
@@ -259,7 +288,9 @@ router.post("/google", async (req, res) => {
     });
   } catch (error) {
     console.error("google auth error:", error);
-    res.status(500).json({ message: "Google authentication failed." });
+    return res.status(500).json({
+      message: "Google authentication failed.",
+    });
   }
 });
 
