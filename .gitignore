@@ -7,3 +7,5 @@ client-cra-backup
 .env
 server/.env
 client/.env
+AI-Powered-Study-Planner/server/.env
+AI-Powered-Study-Planner/client/.env
