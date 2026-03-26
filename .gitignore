@@ -1,9 +1,9 @@
 node_modules
-client/node_modules
-server/node_modules
+AI-Powered-Study-Planner/node_modules
+AI-Powered-Study-Planner/server/node_modules
+AI-Powered-Study-Planner/client/node_modules
 dist
 build
-client-cra-backup
 .env
 server/.env
 client/.env
