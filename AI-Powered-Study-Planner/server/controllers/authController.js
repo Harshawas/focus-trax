@@ -88,6 +88,7 @@ const signup = async (req, res) => {
     });
 
     await sendOtpEmail(normalizedEmail, name.trim(), otp);
+    
 
     return res.status(200).json({
       message: "OTP sent successfully to your email.",
