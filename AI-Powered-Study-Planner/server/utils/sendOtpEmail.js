@@ -2,32 +2,25 @@ const { Resend } = require("resend");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// The three parameters — email, name, otp — are what authController.js passes in
 async function sendOtpEmail(email, name, otp) {
   if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY is missing");
+    throw new Error("RESEND_API_KEY is missing from environment variables");
   }
 
+  // We use the exact same parameter names throughout — email, name, otp
   await resend.emails.send({
-    from: "onboarding@resend.dev",
-    to: email,
-    subject: "Verify your Focus Trax account",
+    from: "onboarding@resend.dev", // Free Resend sender, works for testing
+    to: email,                      // ✅ 'email' not 'userEmail'
+    subject: "Your OTP Code - Focus Trax",
     html: `
-      <div style="font-family: Arial, sans-serif; padding: 24px; color: #111827;">
-        <h2 style="margin-bottom: 12px;">Hello ${name},</h2>
-        <p style="font-size: 15px; line-height: 1.6;">
-          Your OTP for Focus Trax account verification is:
-        </p>
-        <div style="margin: 24px 0; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #d97706;">
-          ${otp}
-        </div>
-        <p style="font-size: 14px; color: #4b5563;">
-          This OTP is valid for 10 minutes.
-        </p>
-        <p style="font-size: 14px; color: #4b5563;">
-          If you did not request this, please ignore this email.
-        </p>
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto;">
+        <h2>Hi ${name} 👋</h2>
+        <p>Your One-Time Password (OTP) for signing up is:</p>
+        <h1 style="letter-spacing: 8px; color: #f97316;">${otp}</h1>
+        <p>This OTP is valid for <strong>10 minutes</strong>. Do not share it with anyone.</p>
       </div>
-    `,
+    `,   // ✅ 'otp' not 'otpCode'
   });
 }
 
