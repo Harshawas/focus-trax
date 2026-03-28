@@ -65,15 +65,11 @@ It combines **personalized study planning**, **focus session tracking**, **task 
 ---
 
 ## 📸 Screenshots
-### Example:
-- Login Page
-- Dashboard
-- Planner Page
-- Focus Mode
-- Performance Analytics
 
+![Dark startup Page](AI-Powered-Study-Planner/client/src/assets/darkstartup.png)
+![Light Startup Page](AI-Powered-Study-Planner/client/src/assets/lightstartup.png)
 ![Login Page](AI-Powered-Study-Planner/client/src/assets/login.png)
-![Light Login Page](AI-Powered-Study-Planner/client/src/assets/light login.png)
+![Light Login Page](AI-Powered-Study-Planner/client/src/assets/lightlogin.png)
 ![Dashboard](AI-Powered-Study-Planner/client/src/assets/dashboard.png)
 ![Smart Planner](AI-Powered-Study-Planner/client/src/assets/planner.png)
 ![Focus Mode](AI-Powered-Study-Planner/client/src/assets/Focus.png)
