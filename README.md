@@ -75,5 +75,5 @@ It combines **personalized study planning**, **focus session tracking**, **task 
 ![Login Page](AI-Powered-Study-Planner/client/src/assets/login.png)
 ![Dashboard](AI-Powered-Study-Planner/client/src/assets/dashboard.png)
 ![Smart Planner](AI-Powered-Study-Planner/client/src/assets/planner.png)
-![Focus Mode](AI-Powered-Study-Planner/client/src/assets/focus.png)
+![Focus Mode](AI-Powered-Study-Planner/client/src/assets/Focus.png)
 ![Performance Analytics](AI-Powered-Study-Planner/client/src/assets/performance.png)
