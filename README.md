@@ -72,5 +72,8 @@ It combines **personalized study planning**, **focus session tracking**, **task 
 - Focus Mode
 - Performance Analytics
 
-![Login Page](your-image-link-here)
-![Dashboard](your-image-link-here)
+![Login Page](AI-Powered-Study-Planner/client/src/assets/login.png)
+![Dashboard](AI-Powered-Study-Planner/client/src/assets/dashboard.png)
+![Smart Planner](AI-Powered-Study-Planner/client/src/assets/planner.png)
+![Focus Mode](AI-Powered-Study-Planner/client/src/assets/focus.png)
+![Performance Analytics](AI-Powered-Study-Planner/client/src/assets/performance.png)
