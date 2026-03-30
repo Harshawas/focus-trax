@@ -25,25 +25,43 @@ function Planner() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const parseResponseSafely = async (response) => {
+    const contentType = response.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      return await response.json();
+    }
+
+    const text = await response.text();
+    throw new Error(
+      text?.startsWith("<")
+        ? "Backend route not found or API URL is incorrect."
+        : text || "Unexpected server response."
+    );
+  };
+
   const fetchTasks = async () => {
     try {
+      setError("");
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`${API_BASE_URL}/tasks`, {
+      const response = await fetch(`${API_BASE_URL}/api/tasks`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const data = await response.json();
+      const data = await parseResponseSafely(response);
 
       if (!response.ok) {
         throw new Error(data.message || "Failed to fetch tasks");
       }
 
-      setTasks(data);
+      setTasks(Array.isArray(data) ? data : []);
     } catch (err) {
+      console.error("Fetch tasks error:", err);
       setError(err.message || "Failed to fetch tasks");
+      setTasks([]);
     } finally {
       setLoading(false);
     }
@@ -57,53 +75,53 @@ function Planner() {
     localStorage.setItem("plannedItems", JSON.stringify(plannedItems));
   }, [plannedItems]);
 
-const handleAddTask = async () => {
-  try {
-    setError("");
+  const handleAddTask = async () => {
+    try {
+      setError("");
 
-    if (!newTask.trim()) {
-      setError("Please enter a task.");
-      return;
+      if (!newTask.trim()) {
+        setError("Please enter a task.");
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${API_BASE_URL}/api/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title: newTask.trim() }),
+      });
+
+      const data = await parseResponseSafely(response);
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to add task");
+      }
+
+      setNewTask("");
+      fetchTasks();
+    } catch (err) {
+      console.error("Add task error:", err);
+      setError(err.message || "Something went wrong");
     }
-
-    const token = localStorage.getItem("token");
-
-    const response = await fetch(`${API_BASE_URL}/tasks`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ title: newTask.trim() }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to add task");
-    }
-
-    setNewTask("");
-    fetchTasks();
-  } catch (err) {
-    console.error("Add task error:", err);
-    setError(err.message || "Something went wrong");
-  }
-};
+  };
 
   const handleDeleteTask = async (id) => {
     try {
-      const token = localStorage.getItem("token");
       setError("");
+      const token = localStorage.getItem("token");
 
-      const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const data = await response.json();
+      const data = await parseResponseSafely(response);
 
       if (!response.ok) {
         throw new Error(data.message || "Failed to delete task");
@@ -111,6 +129,7 @@ const handleAddTask = async () => {
 
       fetchTasks();
     } catch (err) {
+      console.error("Delete task error:", err);
       setError(err.message || "Failed to delete task");
     }
   };
