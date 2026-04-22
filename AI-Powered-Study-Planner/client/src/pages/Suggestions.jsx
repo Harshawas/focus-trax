@@ -63,9 +63,9 @@ function Suggestions() {
   const focusScore = Math.max(
     0,
     100 -
-      stats.tabSwitchCount * 10 -
-      stats.windowBlurCount * 5 -
-      stats.warningCount * 15
+    stats.tabSwitchCount * 10 -
+    stats.windowBlurCount * 5 -
+    stats.warningCount * 15
   );
 
   const suggestions = useMemo(() => {
@@ -73,81 +73,81 @@ function Suggestions() {
 
     if (taskCount === 0) {
       generatedSuggestions.push({
-        title: "Add Study Tasks",
+        title: "Define Your Study Curriculum",
         description:
-          "Your planner is empty. Add subjects and tasks so the system can generate meaningful study guidance.",
+          "Your planner is empty. Without a roadmap, willpower easily depletes. Break your current subject down into 3 specific, manageable tasks right now.",
         type: "info",
       });
     }
 
     if (stats.completedFocusSessions >= 3 && stats.distractedEvents <= 1) {
       generatedSuggestions.push({
-        title: "Increase Challenge Level",
+        title: "Deep Work State Achieved - Use the Feynman Technique",
         description:
-          "Your focus pattern looks strong. You can increase session depth or add one more high-priority task.",
+          "Your focus pattern is exceptional today. Capitalize on this high cognitive state by trying to explain your most difficult concept out loud as if teaching a child. This will instantly expose any gaps in your knowledge.",
         type: "success",
       });
     }
 
     if (stats.distractedEvents >= 2) {
       generatedSuggestions.push({
-        title: "Reduce Distractions",
+        title: "Implement the 20-Second Rule",
         description:
-          "Frequent distracted events were detected. Try shorter focus blocks and reduce external interruptions.",
+          "We noticed frequent distractions breaking your study rhythm. Make your worst distractions (like your phone or social web tabs) take at least 20 seconds to access. Adding small friction works wonders to kill impulsive habits.",
         type: "warning",
       });
     }
 
     if (focusScore < 60) {
       generatedSuggestions.push({
-        title: "Focus Score is Low",
+        title: "Cognitive Load Reset Required",
         description:
-          "Your current engagement trend is weak. Consider taking a short reset break and restarting with a smaller target.",
+          "Your engagement trend is slipping. Switch from your current task to a 'Spaced Repetition' review of older material, or take a strict 15-minute away-from-screen break to clear mental fatigue.",
         type: "danger",
       });
     }
 
     if (focusScore >= 80 && taskCount > 0) {
       generatedSuggestions.push({
-        title: "Maintain Current Rhythm",
+        title: "Try the Pomodoro 'Plus' Method",
         description:
-          "Your study pattern is stable. Continue with the current schedule and maintain consistency.",
+          "Since your focus score is very stable, try pushing your next focus session from 25 minutes up to 50 minutes, followed by a rewarding 10-minute break. You have the momentum for longer deep-flow states.",
         type: "success",
       });
     }
 
     if (stats.completedFocusSessions === 0 && taskCount > 0) {
       generatedSuggestions.push({
-        title: "Start a Focus Session",
+        title: "Beat Procrastination with the '2-Minute Rule'",
         description:
-          "You have planned tasks but no completed focus sessions yet. Start one Pomodoro cycle to begin progress.",
+          "You've planned your work, but haven't started. Trick your brain by committing to study for just 2 minutes. Usually, the friction is just in starting, and you'll naturally want to continue once you cross that hurdle.",
         type: "info",
       });
     }
 
     if (stats.distractedEvents >= 3 && focusScore < 50) {
       generatedSuggestions.push({
-        title: "Burnout Risk Detected",
+        title: "High Burnout Risk - Change Context",
         description:
-          "Your distraction level is high and focus score is dropping. Take a longer recovery break before continuing.",
+          "Your distraction levels are very high and focus is dropping. Forcibly step away from your desk, get some water, or physically change your study environment (like moving to a different room) to reset your brain context.",
         type: "danger",
       });
     }
 
     if (taskCount >= 5 && stats.completedFocusSessions <= 1) {
       generatedSuggestions.push({
-        title: "Reduce Task Load",
+        title: "Avoid Decision Fatigue - Eat the Frog",
         description:
-          "Your current planner load may be too high compared to completed focus sessions. Break large goals into smaller tasks.",
+          "You have a lot of active tasks but low session completion. Your brain might be overwhelmed. 'Eat the Frog'—pick the single hardest task on your list and ignore everything else until it's done.",
         type: "warning",
       });
     }
 
     if (generatedSuggestions.length === 0) {
       generatedSuggestions.push({
-        title: "Balanced Progress",
+        title: "Consistent Momentum",
         description:
-          "Your current productivity signals look balanced. Keep following your study plan.",
+          "Your metrics are perfectly balanced. The best strategy right now is simply maintaining your current rhythm. Keep taking water breaks and don't change what's already working.",
         type: "success",
       });
     }
