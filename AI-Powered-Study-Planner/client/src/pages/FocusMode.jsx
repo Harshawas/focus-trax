@@ -118,27 +118,14 @@ function FocusMode() {
   );
 
   const syncStatsToDatabase = useCallback(
-    async (overrides = {}) => {
+    async (increments = {}) => {
       try {
-        await updateStats({
-          completedFocusSessions,
-          distractedEvents,
-          tabSwitchCount,
-          windowBlurCount,
-          warningCount,
-          ...overrides,
-        });
+        await updateStats(increments);
       } catch (error) {
         console.error("Failed to sync stats:", error);
       }
     },
-    [
-      completedFocusSessions,
-      distractedEvents,
-      tabSwitchCount,
-      windowBlurCount,
-      warningCount,
-    ]
+    []
   );
 
   useEffect(() => {
@@ -294,105 +281,102 @@ function FocusMode() {
   }, [faceDetected, webcamMonitoring]);
 
   useEffect(() => {
-  let timer;
+    let timer;
 
-  if (isRunning && timeLeft > 0) {
-    timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-  }
+    if (isRunning && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    }
 
-  if (timeLeft === 0 && !sessionCompletionLockedRef.current) {
-    sessionCompletionLockedRef.current = true;
+    if (timeLeft === 0 && !sessionCompletionLockedRef.current) {
+      sessionCompletionLockedRef.current = true;
 
-    const handleSessionComplete = async () => {
-      if (isFocusSession) {
-        const newCompleted = completedFocusSessions + 1;
-        setCompletedFocusSessions(newCompleted);
+      const handleSessionComplete = async () => {
+        if (isFocusSession) {
+          setCompletedFocusSessions(prev => prev + 1);
 
-        await syncStatsToDatabase({
-          completedFocusSessions: newCompleted,
-        });
+          await syncStatsToDatabase({
+            completedFocusSessions: 1,
+          });
 
-        await logDailyAnalytics({
-          focusMinutes: savedFocus,
-          completedSessions: 1,
-        });
+          await logDailyAnalytics({
+            focusMinutes: savedFocus,
+            completedSessions: 1,
+          });
 
-        addNotification({
-          title: "Focus Session Complete",
-          message: `You completed a ${savedFocus}-minute focus session.`,
-          type: "success",
-        });
+          addNotification({
+            title: "Focus Session Complete",
+            message: `You completed a ${savedFocus}-minute focus session.`,
+            type: "success",
+          });
 
-        showToast("success", "Focus session completed.");
-        showBrowserNotification(
-          "Focus Session Complete",
-          "Time for a short break."
-        );
+          showToast("success", "Focus session completed.");
+          showBrowserNotification(
+            "Focus Session Complete",
+            "Time for a short break."
+          );
 
-        setIsFocusSession(false);
-        setTimeLeft(breakTime);
-        setIsRunning(autoStartBreaks);
-      } else {
-        addNotification({
-          title: "Break Complete",
-          message: "Your next focus session is ready to start.",
-          type: "info",
-        });
+          setIsFocusSession(false);
+          setTimeLeft(breakTime);
+          setIsRunning(autoStartBreaks);
+        } else {
+          addNotification({
+            title: "Break Complete",
+            message: "Your next focus session is ready to start.",
+            type: "info",
+          });
 
-        showToast("info", "Break session completed.");
-        showBrowserNotification(
-          "Break Complete",
-          "Your next focus session is ready."
-        );
+          showToast("info", "Break session completed.");
+          showBrowserNotification(
+            "Break Complete",
+            "Your next focus session is ready."
+          );
 
-        setIsFocusSession(true);
-        setTimeLeft(focusTime);
-        setIsRunning(autoStartFocus);
-      }
+          setIsFocusSession(true);
+          setTimeLeft(focusTime);
+          setIsRunning(autoStartFocus);
+        }
 
-      setTimeout(() => {
-        sessionCompletionLockedRef.current = false;
-      }, 100);
+        setTimeout(() => {
+          sessionCompletionLockedRef.current = false;
+        }, 100);
+      };
+
+      handleSessionComplete();
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
     };
-
-    handleSessionComplete();
-  }
-
-  return () => {
-    if (timer) clearInterval(timer);
-  };
-}, [
-  isRunning,
-  timeLeft,
-  isFocusSession,
-  completedFocusSessions,
-  syncStatsToDatabase,
-  savedFocus,
-  breakTime,
-  focusTime,
-  autoStartBreaks,
-  autoStartFocus,
-  showBrowserNotification,
-]);
+  }, [
+    isRunning,
+    timeLeft,
+    isFocusSession,
+    completedFocusSessions,
+    syncStatsToDatabase,
+    savedFocus,
+    breakTime,
+    focusTime,
+    autoStartBreaks,
+    autoStartFocus,
+    showBrowserNotification,
+  ]);
 
   useEffect(() => {
     if (!tabTracking) return;
 
     const handleVisibilityChange = async () => {
       if (document.hidden) {
-        const newCount = tabSwitchCount + 1;
-        setTabSwitchCount(newCount);
-        await syncStatsToDatabase({ tabSwitchCount: newCount });
+        setTabSwitchCount(prev => prev + 1);
+        await syncStatsToDatabase({ tabSwitchCount: 1 });
         await logDailyAnalytics({ tabSwitches: 1 });
       }
     };
 
     const handleWindowBlur = async () => {
-      const newCount = windowBlurCount + 1;
-      setWindowBlurCount(newCount);
-      await syncStatsToDatabase({ windowBlurCount: newCount });
+      setWindowBlurCount(prev => prev + 1);
+      await syncStatsToDatabase({ windowBlurCount: 1 });
       await logDailyAnalytics({ windowBlurEvents: 1 });
     };
 
@@ -414,24 +398,22 @@ function FocusMode() {
       warningOneLoggedRef.current = true;
 
       delayedUpdate = setTimeout(async () => {
-        const newWarnings = warningCount + 1;
-        setWarningCount(newWarnings);
-        await syncStatsToDatabase({ warningCount: newWarnings });
+        setWarningCount(prev => prev + 1);
+        await syncStatsToDatabase({ warningCount: 1 });
         await logDailyAnalytics({ warnings: 1 });
       }, 0);
     }
 
     if (faceMissingSeconds === 10 && !warningTwoLoggedRef.current) {
       warningTwoLoggedRef.current = true;
-addNotification({
-  title: "Focus Warning",
-  message: "Your face is not detected. Please return to the screen.",
-  type: "warning",
-});
+      addNotification({
+        title: "Focus Warning",
+        message: "Your face is not detected. Please return to the screen.",
+        type: "warning",
+      });
       delayedUpdate = setTimeout(async () => {
-        const newWarnings = warningCount + 1;
-        setWarningCount(newWarnings);
-        await syncStatsToDatabase({ warningCount: newWarnings });
+        setWarningCount(prev => prev + 1);
+        await syncStatsToDatabase({ warningCount: 1 });
         await logDailyAnalytics({ warnings: 1 });
 
         showBrowserNotification(
@@ -443,15 +425,14 @@ addNotification({
 
     if (faceMissingSeconds >= 15 && !distractedIncrementedRef.current) {
       distractedIncrementedRef.current = true;
-addNotification({
-  title: "Focus Warning",
-  message: "Your face is not detected. Please return to the screen.",
-  type: "warning",
-});
+      addNotification({
+        title: "Focus Warning",
+        message: "Your face is not detected. Please return to the screen.",
+        type: "warning",
+      });
       delayedUpdate = setTimeout(async () => {
-        const newDistracted = distractedEvents + 1;
-        setDistractedEvents(newDistracted);
-        await syncStatsToDatabase({ distractedEvents: newDistracted });
+        setDistractedEvents(prev => prev + 1);
+        await syncStatsToDatabase({ distractedEvents: 1 });
         await logDailyAnalytics({ distractedEvents: 1 });
       }, 0);
     }
@@ -506,15 +487,15 @@ addNotification({
   };
 
   if (!loaderDelayDone) {
-  return (
-    <AppLayout
-      title="Focus Mode"
-      subtitle="Track live study engagement and focus sessions"
-    >
-      <AppLoader message="Initializing focus monitoring..." />
-    </AppLayout>
-  );
-}
+    return (
+      <AppLayout
+        title="Focus Mode"
+        subtitle="Track live study engagement and focus sessions"
+      >
+        <AppLoader message="Initializing focus monitoring..." />
+      </AppLayout>
+    );
+  }
   return (
     <AppLayout
       title="Focus Mode"
@@ -555,13 +536,12 @@ addNotification({
                     <div className="metric-card rounded-xl px-4 py-3">
                       <p className="metric-title">Attention</p>
                       <p
-                        className={`font-bold text-lg mt-1 ${
-                          derivedAttentionStatus === "Good"
-                            ? "text-green-600"
-                            : derivedAttentionStatus === "Low"
+                        className={`font-bold text-lg mt-1 ${derivedAttentionStatus === "Good"
+                          ? "text-green-600"
+                          : derivedAttentionStatus === "Low"
                             ? "text-yellow-600"
                             : "text-red-500"
-                        }`}
+                          }`}
                       >
                         {derivedAttentionStatus}
                       </p>

@@ -5,7 +5,9 @@ const { protect } = require("../middleware/authMiddleware");
 const router = express.Router();
 
 function getDateKey(date = new Date()) {
-  return date.toISOString().split("T")[0];
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+  return localDate.toISOString().split("T")[0];
 }
 
 function getLast7Days() {

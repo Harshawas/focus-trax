@@ -24,31 +24,22 @@ const updateUserStats = async (req, res) => {
       warningCount,
     } = req.body;
 
-    let stats = await SessionStat.findOne({ user: req.user.id });
+    const incQuery = {};
+    if (completedFocusSessions !== undefined) incQuery.completedFocusSessions = completedFocusSessions;
+    if (distractedEvents !== undefined) incQuery.distractedEvents = distractedEvents;
+    if (tabSwitchCount !== undefined) incQuery.tabSwitchCount = tabSwitchCount;
+    if (windowBlurCount !== undefined) incQuery.windowBlurCount = windowBlurCount;
+    if (warningCount !== undefined) incQuery.warningCount = warningCount;
 
-    if (!stats) {
-      stats = new SessionStat({ user: req.user.id });
-    }
+    const stats = await SessionStat.findOneAndUpdate(
+      { user: req.user.id },
+      { $inc: incQuery },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
 
-    if (completedFocusSessions !== undefined) {
-      stats.completedFocusSessions = completedFocusSessions;
-    }
-    if (distractedEvents !== undefined) {
-      stats.distractedEvents = distractedEvents;
-    }
-    if (tabSwitchCount !== undefined) {
-      stats.tabSwitchCount = tabSwitchCount;
-    }
-    if (windowBlurCount !== undefined) {
-      stats.windowBlurCount = windowBlurCount;
-    }
-    if (warningCount !== undefined) {
-      stats.warningCount = warningCount;
-    }
-
-    await stats.save();
     res.json(stats);
   } catch (error) {
+    console.error("stats update error:", error);
     res.status(500).json({ message: "Failed to update stats" });
   }
 };

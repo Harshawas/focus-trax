@@ -56,7 +56,7 @@ function Dashboard() {
       const token = localStorage.getItem("token");
 
       const [taskResponse, statsData, weeklyData] = await Promise.all([
-        fetch(`${API_BASE_URL}/tasks`, {
+        fetch(`${API_BASE_URL}/api/tasks`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
