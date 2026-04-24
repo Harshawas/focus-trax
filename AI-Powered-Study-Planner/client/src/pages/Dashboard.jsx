@@ -67,8 +67,14 @@ function Dashboard() {
 
       const taskData = await taskResponse.json();
 
+      const plannedItems = JSON.parse(localStorage.getItem("plannedItems") || "[]");
+      const plannedCount = Array.isArray(plannedItems) ? plannedItems.length : 0;
+
       if (taskResponse.ok) {
-        setTaskCount(taskData.length);
+        const apiTaskCount = Array.isArray(taskData) ? taskData.length : 0;
+        setTaskCount(apiTaskCount + plannedCount);
+      } else {
+        setTaskCount(plannedCount);
       }
 
       setStats({
@@ -177,7 +183,7 @@ function Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
-              ["Total Tasks", taskCount, "text-slate-900 dark:text-white"],
+              ["Total Tasks", taskCount, "text-indigo-600 dark:text-indigo-400"],
               [
                 "Focus Sessions",
                 stats.completedFocusSessions,
